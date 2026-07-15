@@ -1,5 +1,6 @@
 # Déploiement de l'app — À DÉPLOYER PAR DIGEST (pas par tag).
-# ➜ Remplacez l'image ci-dessous par VOTRE digest signé (sortie de `echo $DIGEST` au Lab 0/2).
+# ➜ Remplacez l'image ci-dessous par VOTRE digest signé (sortie de `echo $DIGEST` au Lab 0/2),
+#   ou utilisez `scripts/deploy.sh` qui fait cette substitution pour vous sans modifier ce fichier.
 #    ex : ghcr.io/<votre-user>/scs-demo-app@sha256:abcd1234...
 apiVersion: apps/v1
 kind: Deployment
@@ -36,16 +37,3 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: { drop: ["ALL"] }
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: scs-demo-app
-  namespace: app
-spec:
-  type: NodePort
-  selector: { app: scs-demo-app }
-  ports:
-    - port: 80
-      targetPort: 8080
-      nodePort: 30080     # mappé sur localhost:8080 par kind-config.yaml

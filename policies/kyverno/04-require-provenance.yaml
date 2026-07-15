@@ -2,6 +2,12 @@
 # Signer ne suffit pas : on exige la preuve "d'où vient cette image" (qui/quoi/quand).
 # Kyverno vérifie l'attestation de type slsaprovenance attachée à l'image.
 #
+# Deux variantes ci-dessous (comme la policy 03) :
+#   (A) mode PAR CLÉ    → collez votre cosign.pub (Lab 2) [actif par défaut]
+#   (B) mode KEYLESS    → exigez l'identité du workflow GitHub (Lab 5)  [décommentez]
+# ➜ La variante (B) doit correspondre EXACTEMENT à COSIGN_IDENTITY / COSIGN_ISSUER
+#   de votre .env (voir .env.example).
+#
 # BONUS (commenté) : on peut aussi vérifier des CONDITIONS sur le contenu de la provenance,
 # p.ex. que le build vient bien de la branche main de votre dépôt.
 apiVersion: kyverno.io/v1
@@ -29,6 +35,7 @@ spec:
           required: true
           attestations:
             - type: https://slsa.dev/provenance/v0.2
+              # ---- (A) VARIANTE PAR CLÉ ----
               attestors:
                 - count: 1
                   entries:
@@ -37,6 +44,19 @@ spec:
                           -----BEGIN PUBLIC KEY-----
                           COLLEZ_ICI_LE_CONTENU_DE_cosign.pub
                           -----END PUBLIC KEY-----
+              # ---- (B) VARIANTE KEYLESS (Lab 5) : commentez le bloc 'keys' ci-dessus
+              #          et décommentez le bloc 'keyless' ci-dessous ----
+              # attestors:
+              #   - count: 1
+              #     entries:
+              #       - keyless:
+              #           issuer: "https://token.actions.githubusercontent.com"
+              #           # Même remarque que la policy 03 : adaptez @refs/heads/main à la
+              #           # branche exacte qui a construit l'image (ex. features/ma-branche)
+              #           # si vous testez une image buildée hors de main.
+              #           subject: "https://github.com/<votre-user>/supply-chain-security-project/.github/workflows/supply-chain.yml@refs/heads/main"
+              #           rekor:
+              #             url: "https://rekor.sigstore.dev"
               # ---- BONUS : conditions sur le CONTENU de la provenance ----
               # conditions:
               #   - all:

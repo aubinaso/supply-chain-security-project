@@ -6,6 +6,9 @@
 #   (B) mode KEYLESS    → exigez l'identité du workflow GitHub (Lab 5)  [décommentez]
 #
 # ➜ Adaptez "ghcr.io/<votre-user>/scs-demo-app" et la clé / l'identité.
+# ➜ La variante (B) doit correspondre EXACTEMENT à COSIGN_IDENTITY / COSIGN_ISSUER
+#   de votre .env (voir .env.example) — c'est la même identité que celle vérifiée
+#   par scripts/verify.sh en mode keyless.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -47,6 +50,11 @@ spec:
           #     entries:
           #       - keyless:
           #           issuer: "https://token.actions.githubusercontent.com"
+          #           # Le "subject" doit correspondre à la branche EXACTE qui a construit
+          #           # l'image (le workflow tourne aussi sur features/** en plus de main —
+          #           # voir .github/workflows/supply-chain.yml). Si vous testez une image
+          #           # buildée depuis une feature branch, remplacez la fin par
+          #           # @refs/heads/features/ma-branche.
           #           subject: "https://github.com/<votre-user>/supply-chain-security-project/.github/workflows/supply-chain.yml@refs/heads/main"
           #           rekor:
           #             url: "https://rekor.sigstore.dev"
