@@ -3,6 +3,34 @@
 Problèmes réellement rencontrés pendant la mise au point de ce dépôt (pas une liste
 théorique) — avec la cause exacte et le correctif appliqué.
 
+## CI : `Error: Failed minimum severity level` alors qu'aucune CVE critique n'existe
+
+**Symptôme réel observé :**
+```
+Executing: grype -o sarif --fail-on critical --only-fixed ghcr.io/<user>/scs-demo-app@sha256:...
+db could not be loaded: the vulnerability database was built 18 weeks ago (max allowed age is 5 days)
+Error: Failed minimum severity level. Found vulnerabilities with level 'critical' or higher
+```
+
+**Cause :** l'action `anchore/scan-action@v4` (une ancienne version majeure, alors que
+`v7` est la version maintenue au moment de la rédaction) embarque un binaire `grype`
+figé (`v0.80.0`) dont la base de vulnérabilités compatible a fini par dépasser l'âge
+maximal accepté par défaut (5 jours). `grype` refuse alors de charger la DB et sort en
+erreur — l'action interprète **n'importe quelle sortie non nulle** de `grype` comme
+« vulnérabilités critiques trouvées », ce qui est trompeur : **aucun paquet n'a été
+réellement scanné**, ce n'est pas une vraie détection.
+
+**Correctif :** ne plus dépendre du wrapper `anchore/scan-action`. Le workflow installe
+maintenant `grype` directement, à une version épinglée et testée (`v0.115.0`), et scanne
+le SBOM déjà généré (`grype sbom:sbom.spdx.json`) — exactement la même commande que
+`scripts/scan.sh` en local, donc le même comportement partout.
+
+**Leçon générale :** une action GitHub épinglée sur une **vieille version majeure**
+(`@v4` alors que `@v7` existe) peut embarquer des outils obsolètes qui cassent
+silencieusement avec le temps (bases de données qui expirent), même sans qu'aucune ligne
+de votre code n'ait changé. Préférez, quand c'est simple, installer l'outil vous-même à
+une version que vous choisissez et pouvez mettre à jour consciemment.
+
 ## Kyverno : `CustomResourceDefinition ... Too long: must have at most 262144 bytes`
 
 **Cause :** `kubectl apply` stocke le manifeste entier dans l'annotation

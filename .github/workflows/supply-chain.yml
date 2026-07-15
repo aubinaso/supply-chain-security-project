@@ -74,13 +74,15 @@ jobs:
         run: syft "${{ steps.ref.outputs.ref }}" -o spdx-json > sbom.spdx.json
 
       # ---- Scan : casse si CRITICAL corrigeable ----
+      # Installation directe de grype (version épinglée), pas via anchore/scan-action :
+      # ce wrapper a embarqué un binaire grype obsolète (v0.80.0) dont la base de
+      # vulnérabilités compatible dépassait l'âge maximal accepté (5 jours), faisant
+      # échouer le scan avec un faux message de vulnérabilité critique. Voir
+      # docs/troubleshooting.md pour le détail de cet incident.
+      - name: Install Grype
+        run: curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin v0.115.0
       - name: Scan (Grype) — gate sur CRITICAL
-        uses: anchore/scan-action@v4
-        with:
-          image: ${{ steps.ref.outputs.ref }}
-          fail-build: true
-          severity-cutoff: critical
-          only-fixed: true
+        run: grype "sbom:sbom.spdx.json"
 
       # ---- Signature keyless ----
       - name: Install cosign
