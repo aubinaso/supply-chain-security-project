@@ -2,8 +2,7 @@
 # Signer ne suffit pas : on exige la preuve "d'où vient cette image" (qui/quoi/quand).
 # Kyverno vérifie l'attestation de type slsaprovenance attachée à l'image.
 #
-# BONUS (commenté) : on peut aussi vérifier des CONDITIONS sur le contenu de la provenance,
-# p.ex. que le build vient bien de la branche main de votre dépôt.
+# ➜ Adaptée pour johlan78
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -25,7 +24,7 @@ spec:
               kinds: [Pod]
       verifyImages:
         - imageReferences:
-            - "ghcr.io/<votre-user>/scs-demo-app*"
+            - "ghcr.io/johlan78/scs-demo-app*"
           required: true
           attestations:
             - type: https://slsa.dev/provenance/v0.2
@@ -35,7 +34,8 @@ spec:
                     - keys:
                         publicKeys: |-
                           -----BEGIN PUBLIC KEY-----
-                          COLLEZ_ICI_LE_CONTENU_DE_cosign.pub
+                          MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE6f2oWMWAxWIpA2xVNKH1YwETmKLw
+                          Dek2mBPug4Nem/MnPr2ijuJIqRtzbirywHA+JuVW9WyvgDjBls625QBtSQ==
                           -----END PUBLIC KEY-----
               # ---- BONUS : conditions sur le CONTENU de la provenance ----
               # conditions:

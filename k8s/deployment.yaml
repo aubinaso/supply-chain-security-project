@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: ghcr.io/<votre-user>/scs-demo-app@sha256:REMPLACEZ_PAR_VOTRE_DIGEST
+          image: ghcr.io/johlan78/scs-demo-app@sha256:6274762da84c8f74925c2ebf676c832ad98252b880376c75ba27de5384b90721
           ports:
             - containerPort: 8080
           readinessProbe:
