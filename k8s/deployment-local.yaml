@@ -1,6 +1,5 @@
-# Déploiement de l'app — À DÉPLOYER PAR DIGEST (pas par tag).
-# ➜ Remplacez l'image ci-dessous par VOTRE digest signé (sortie de `echo $DIGEST` au Lab 0/2).
-#    ex : ghcr.io/<votre-user>/scs-demo-app@sha256:abcd1234...
+# Déploiement de l'app — Version locale pour démo Lab 3
+# Utilise l'image du registry local avec digest
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,7 +7,7 @@ metadata:
   namespace: app
   labels: { app: scs-demo-app }
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels: { app: scs-demo-app }
   template:
@@ -17,7 +16,9 @@ spec:
     spec:
       containers:
         - name: app
-          image: ghcr.io/johlan78/scs-demo-app@sha256:6274762da84c8f74925c2ebf676c832ad98252b880376c75ba27de5384b90721
+          # Image locale avec digest
+          image: 172.17.0.1:5000/scs-demo-app:0.1.0@sha256:b506d38852c87a77b6701a5fb03e332dd47d9ccf3fbf82c176e781f09edf0854
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -32,10 +33,17 @@ spec:
             requests: { cpu: "50m", memory: "64Mi" }
             limits: { cpu: "250m", memory: "128Mi" }
           securityContext:
+            runAsUser: 10001
             runAsNonRoot: true
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

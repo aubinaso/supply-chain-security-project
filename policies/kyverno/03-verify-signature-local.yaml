@@ -1,14 +1,11 @@
-# Politique 3 — Exiger une signature cosign VALIDE de VOTRE identité.
-# C'est le contrôle central : le cluster n'exécute que des images signées par vous.
-#
-# Mode PAR CLÉ — collez votre cosign.pub (Lab 2)
-# ➜ Adaptée pour johlan78
+# Politique 3 — Version locale pour démo
+# Exige une signature cosign VALIDE pour le registry local
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: verify-image-signature
   annotations:
-    policies.kyverno.io/title: Vérifier la signature cosign
+    policies.kyverno.io/title: Vérifier la signature cosign (local)
     policies.kyverno.io/category: Supply Chain Security
     policies.kyverno.io/description: >-
       Refuse toute image non signée ou signée par une identité non autorisée.
@@ -24,11 +21,10 @@ spec:
               kinds: [Pod]
       verifyImages:
         - imageReferences:
-            - "ghcr.io/johlan78/scs-demo-app*"
-          mutateDigest: true          # réécrit le tag en digest (empêche la substitution)
+            - "172.17.0.1:5000/scs-demo-app*"
+          mutateDigest: true
           verifyDigest: true
           required: true
-          # ---- VARIANTE PAR CLÉ ----
           attestors:
             - count: 1
               entries:

@@ -1,0 +1,31 @@
+# Politique 1 — Version locale pour démo
+# N'autorise QUE le registry local (via IP hôte Docker)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: allowed-registries
+  annotations:
+    policies.kyverno.io/title: Registres autorisés (local)
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/description: >-
+      Refuse tout Pod dont une image ne provient pas du registry local autorisé.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: verifier-registry
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          Image refusée : seules les images de 172.17.0.1:5000/ sont autorisées.
+        pattern:
+          spec:
+            =(ephemeralContainers):
+              - image: "172.17.0.1:5000/*"
+            =(initContainers):
+              - image: "172.17.0.1:5000/*"
+            containers:
+              - image: "172.17.0.1:5000/*"
