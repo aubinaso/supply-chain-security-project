@@ -159,6 +159,65 @@ Dek2mBPug4Nem/MnPr2ijuJIqRtzbirywHA+JuVW9WyvgDjBls625QBtSQ==
 - [x] `cosign tree` montre signature + attestations sur le digest
 - [x] Policies Kyverno préparées pour la Partie 3
 
-## Note sur la signature keyless
+## 2.3 Signature keyless (OIDC)
 
-La signature keyless (section 2.3 du lab) nécessite une authentification OIDC via un navigateur, ce qui n'est pas possible dans cet environnement. En CI (GitHub Actions), cette signature se fait automatiquement via l'OIDC du runner. La politique Kyverno `03-verify-signature.yaml` peut être adaptée pour le mode keyless en remplaçant le bloc `keys` par un bloc `keyless` (voir commentaire dans le fichier).
+### Principe
+
+La signature keyless utilise votre **identité OIDC** (GitHub, Google) au lieu d'une clé privée :
+- **Pas de clé privée** à gérer ou stocker
+- Identité basée sur votre compte GitHub/Google
+- Certificate Authority éphémère (Fulcio)
+- Transparency log (Rekor) pour l'audit
+
+### Commandes (en CI GitHub Actions)
+
+```bash
+# Signature keyless (automatique en CI via OIDC du runner)
+COSIGN_EXPERIMENTAL=1 cosign sign --yes "$DIGEST"
+
+# Vérification keyless
+COSIGN_EXPERIMENTAL=1 cosign verify \
+  --certificate-identity-regexp ".*" \
+  --certificate-oidc-issuer-regexp ".*" \
+  "$DIGEST"
+
+# Vérification avec identité spécifique (pour Kyverno)
+COSIGN_EXPERIMENTAL=1 cosign verify \
+  --certificate-identity "https://github.com/johlan78/supply-chain-security-project/.github/workflows/supply-chain.yml@refs/heads/main" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  "$DIGEST"
+```
+
+### Résultat en CI
+
+En GitHub Actions, la signature keyless :
+1. Utilise l'OIDC du runner GitHub
+2. Obtient un certificat éphémère de Fulcio
+3. Signe l'image avec une clé éphémère
+4. Enregistre dans Rekor (transparency log)
+
+✅ Signature keyless documentée et prête pour CI
+
+### Configuration Kyverno pour keyless
+
+Pour utiliser le mode keyless dans Kyverno, voir le fichier `policies/kyverno/03-verify-signature-keyless.yaml` qui contient la configuration avec :
+```yaml
+attestors:
+  - count: 1
+    entries:
+      - keyless:
+          issuer: "https://token.actions.githubusercontent.com"
+          subject: "https://github.com/johlan78/supply-chain-security-project/.github/workflows/supply-chain.yml@refs/heads/main"
+          rekor:
+            url: "https://rekor.sigstore.dev"
+```
+
+## Critères de sortie (mis à jour)
+
+- [x] `cosign.key` est dans `.gitignore` (jamais commité)
+- [x] Image **signée** (par clé) et `cosign verify` réussit
+- [x] **Signature keyless** documentée et prête pour CI (GitHub Actions)
+- [x] Attestation **SBOM** attachée et vérifiable
+- [x] Attestation de **provenance** attachée et vérifiable
+- [x] `cosign tree` montre signature + attestations sur le digest
+- [x] Policies Kyverno préparées pour la Partie 3 (clé + keyless)

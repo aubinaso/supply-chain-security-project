@@ -1,0 +1,40 @@
+# Politique 3 (variante KEYLESS) — Exiger une signature cosign via OIDC
+# Cette variante utilise l'identité OIDC (GitHub Actions) au lieu d'une clé publique.
+# À utiliser en CI (GitHub Actions) après avoir activé la signature keyless.
+#
+# ➜ Adaptée pour johlan78
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signature-keyless
+  annotations:
+    policies.kyverno.io/title: Vérifier la signature cosign (keyless)
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/description: >-
+      Refuse toute image non signée ou signée par une identité non autorisée.
+      Mode keyless : vérifie via l'identité OIDC du workflow GitHub Actions.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: verifier-signature-cosign-keyless
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/johlan78/scs-demo-app*"
+          mutateDigest: true          # réécrit le tag en digest (empêche la substitution)
+          verifyDigest: true
+          required: true
+          # ---- MODE KEYLESS (OIDC via GitHub Actions) ----
+          attestors:
+            - count: 1
+              entries:
+                - keyless:
+                    issuer: "https://token.actions.githubusercontent.com"
+                    subject: "https://github.com/johlan78/supply-chain-security-project/.github/workflows/supply-chain.yml@refs/heads/main"
+                    rekor:
+                      url: "https://rekor.sigstore.dev"
