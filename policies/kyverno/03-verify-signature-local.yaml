@@ -1,0 +1,36 @@
+# Politique 3 — Version locale pour démo
+# Exige une signature cosign VALIDE pour le registry local
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signature
+  annotations:
+    policies.kyverno.io/title: Vérifier la signature cosign (local)
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/description: >-
+      Refuse toute image non signée ou signée par une identité non autorisée.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: verifier-signature-cosign
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      verifyImages:
+        - imageReferences:
+            - "172.17.0.1:5000/scs-demo-app*"
+          mutateDigest: true
+          verifyDigest: true
+          required: true
+          attestors:
+            - count: 1
+              entries:
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE6f2oWMWAxWIpA2xVNKH1YwETmKLw
+                      Dek2mBPug4Nem/MnPr2ijuJIqRtzbirywHA+JuVW9WyvgDjBls625QBtSQ==
+                      -----END PUBLIC KEY-----

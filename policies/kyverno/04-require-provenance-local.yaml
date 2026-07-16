@@ -1,0 +1,36 @@
+# Politique 4 — Version locale pour démo
+# Exige une attestation de provenance SLSA valide
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-provenance-attestation
+  annotations:
+    policies.kyverno.io/title: Exiger l'attestation de provenance (local)
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/description: >-
+      Refuse toute image sans attestation de provenance SLSA signée et valide.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: verifier-provenance
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      verifyImages:
+        - imageReferences:
+            - "172.17.0.1:5000/scs-demo-app*"
+          required: true
+          attestations:
+            - type: https://slsa.dev/provenance/v0.2
+              attestors:
+                - count: 1
+                  entries:
+                    - keys:
+                        publicKeys: |-
+                          -----BEGIN PUBLIC KEY-----
+                          MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE6f2oWMWAxWIpA2xVNKH1YwETmKLw
+                          Dek2mBPug4Nem/MnPr2ijuJIqRtzbirywHA+JuVW9WyvgDjBls625QBtSQ==
+                          -----END PUBLIC KEY-----

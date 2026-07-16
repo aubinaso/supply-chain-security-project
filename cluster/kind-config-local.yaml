@@ -1,0 +1,30 @@
+# Cluster kind local pour la démo — avec support registry insecure
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: scs
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP
+    # Allow insecure registries
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."172.17.0.1:5000"]
+      endpoint = ["http://172.17.0.1:5000"]
+    [plugins."io.containerd.grpc.v1.cri".registry.configs."172.17.0.1:5000".tls]
+      insecure_skip_verify = true
