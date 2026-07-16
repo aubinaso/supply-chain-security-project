@@ -97,6 +97,16 @@ echo ""
 echo -e "${CYAN}$ git checkout app/Dockerfile${NC}  (annule la modif malveillante simulée)"
 git checkout app/Dockerfile
 echo ""
+echo -e "${YELLOW}Le tag $TAG pointe maintenant sur le contenu trafiqué dans le registry local.${NC}"
+echo -e "${YELLOW}On republie la version propre pour ne pas casser une répétition ultérieure :${NC}"
+echo -e "${CYAN}$ docker build -t $IMG:$TAG app/ && docker push $IMG:$TAG${NC}"
+docker build -t "$IMG:$TAG" app/
+docker push "$IMG:$TAG"
+echo -e "${GREEN}✓${NC} Tag $TAG restauré au contenu légitime"
+echo -e "${YELLOW}Note : un rebuild Docker n'est pas garanti bit-à-bit identique (couches, cache).${NC}"
+echo -e "${YELLOW}Si le digest diffère de l'original signé, re-signez avant la prochaine répétition${NC}"
+echo -e "${YELLOW}(cosign sign --key cosign.key ... sur le nouveau digest).${NC}"
+echo ""
 wait_for_user
 
 # --------------------------------------------------------------------------
